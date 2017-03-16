@@ -1,0 +1,205 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+
+<title>Weather Near You</title>
+<meta name="description" content="See the weather in your area">
+<meta name="author" content="Kevin Nolan">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<style>
+@font-face {
+  font-family:newsDomin;
+  src:url(https://dl.dropbox.com/s/d2nsmr8iwsl9kma/Domine-Bold.ttf);
+}
+@font-face {
+  font-family:newsBelg;
+  src:url(https://dl.dropbox.com/s/zg2swa83segaz01/Belgrano-Regular.ttf);
+}  
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family:newsBelg;
+  background: url("https://dl.dropbox.com/s/qvlhomjc1o6f2wd/Texture03_Newspaper2.jpg");
+}
+
+h1 {
+  margin:3px 1px 10px 1px;
+  color:#3366ff;
+}
+
+.tempFont {
+  font-size:40px;
+}
+
+.button {
+  background-color: #88cccc;
+  border: none;
+  color: white;
+  border-radius:2px;
+  text-decoration: none;
+  display: block;
+  font-size: 12px;
+  margin: auto;
+  cursor: pointer;
+}
+
+.outer-box {
+  margin-top:50px;
+  width: 600px;
+  height: 255px;
+  display:inline-block;
+  background: url("https://dl.dropbox.com/s/xngl59mawlditfq/torn-paper2.png") no-repeat;
+  background-size: 100% 100%;
+  -ms-transform: rotate(-2deg); /* IE 9 */
+  -webkit-transform: rotate(-2deg); /* Chrome, Safari, Opera */
+  transform: rotate(-2deg);
+
+}
+
+.inner-box {
+  border: 5px solid rgba(0, 0, 200,.3);
+  margin: 40px 15px 0px 15px;
+  padding:5px;
+  height:160px;
+}
+
+.weatherPaneL {
+  width:20%;
+  display:inline-block;
+}
+.weatherPaneM {
+  width:35%;
+  display:inline-block;
+}
+.weatherPaneR {
+  width:30%;
+  text-align:left;
+  display:inline-block;
+}
+
+.attribution {
+  padding:5px;
+  float:right;
+  background: url("https://dl.dropbox.com/s/xngl59mawlditfq/torn-paper2.png") no-repeat;
+  background-size:100% 100%;
+}
+</style>
+
+</head>
+
+<body style="text-align:center">
+  <div class="outer-box">
+    <div class="inner-box">
+      <h1>Weather today in <span id="place-name">place name</span></h1>
+      <div class="weatherPaneL">
+        <span class="tempFont" id="temperature">...</span>
+        <button class="button" id="togg-temp">Change</button>
+      </div>
+      <div class="weatherPaneM">
+        <span id="weath-icon">...</span><br>
+          <span id="desc">...</span>
+      </div>
+      <div class="weatherPaneR">
+        <b>Wind:</b> <span id="wind">...</span> meters/sec<br>
+          <b>Cloudiness:</b> <span id="cloudiness">...</span>%<br>          
+          <b>Humidity:</b> <span id="humidity">...</span>%        
+      </div>
+    </div>                                     
+  </div>
+  <div class="attribution">
+    <a href="http://openweathermap.org/" target="_blank"> <img src="https://openweathermap.org/themes/openweathermap/assets/vendor/owm/img/logo_OpenWeatherMap_orange.svg" width="134" height="29"/> </a>
+  </div>
+
+<script>
+
+var tempType = "C";
+var tempC = 0;
+var tempF = 0;
+$(document).ready(function() {
+  GetGeoLoc();
+  $("#togg-temp").on("click", function() {
+    if (tempType=="C") {tempType="F";}
+    else {tempType="C";}
+    UpdateTempDisplay();
+   });
+});
+
+function GetGeoLoc() {
+  var latLon=[null,null];
+  // Get Geolocation data
+  if (navigator.geolocation) {   navigator.geolocation.getCurrentPosition(function(position) {
+      latLon= [position.coords.latitude,position.coords.longitude];
+
+    GetWeather(latLon);
+      });
+  } else {
+    alert ("Geolocation service not found. Please update your browser or allow geolocation.");
+  }
+}
+  
+function GetWeather(latLon) {  
+  var weatherLink="https://cors-anywhere.herokuapp.com/http://api.openweathermap.org/data/2.5/weather?lat=" + latLon[0] + "&lon=" + latLon[1] + "&appid=d9c2e474d5ccb26e995218d485aa53fa&units=metric";
+  //alert(weatherLink);
+  $.getJSON(weatherLink, function(json) {
+    UpdatePage(json);
+  });
+}
+
+function UpdatePage(jsObj) {
+  $("#place-name").html(jsObj.name);
+  tempC = Math.round(jsObj.main.temp);
+  tempF = Math.round(tempC * (9/5) + 32);
+  UpdateTempDisplay();
+  UpdateWeatherIcon(jsObj.weather[0].icon);
+  $("#desc").html(jsObj.weather[0].description);
+  $("#wind").html(jsObj.wind.speed);
+  $("#cloudiness").html(jsObj.clouds.all);  
+  $("#humidity").html(jsObj.main.humidity);
+}
+
+function UpdateTempDisplay() {
+  // This is called on getting weather data and on hitting temp type button
+  var tempStr="";
+  if(tempType=="C") {tempStr=tempC+"°C";}
+  else {tempStr=tempF+"°F";}
+  $("#temperature").html(tempStr);
+}
+
+function UpdateWeatherIcon(iconStr) {
+  var iconURL="";
+  if (iconStr.indexOf("01") >=0) {
+    iconURL="https://dl.dropbox.com/s/civdyxe12b7difh/Sun.svg";
+  } else if (iconStr.indexOf("02") >=0) {
+    iconURL="https://dl.dropbox.com/s/c3630ybcl8w2591/Cloud-Sun.svg";
+  } else if (iconStr.indexOf("03") >=0) {
+    iconURL="https://dl.dropbox.com/s/4rrovzb1pfwr5ry/Cloud.svg";
+  } else if (iconStr.indexOf("04") >=0) {
+    iconURL="https://dl.dropbox.com/s/4rrovzb1pfwr5ry/Cloud.svg";
+  } else if (iconStr.indexOf("09") >=0) {
+    iconURL="https://dl.dropbox.com/s/tksqz8pzy5kk40d/Cloud-Rain.svg";
+  } else if (iconStr.indexOf("10") >=0) {
+    iconURL="https://dl.dropbox.com/s/o1lhp3ti1qxl5tt/Cloud-Rain-Sun.svg";
+  } else if (iconStr.indexOf("11") >=0) {
+    iconURL="https://dl.dropbox.com/s/26rh0e3xpp41at8/Cloud-Lightning.svg";
+  } else if (iconStr.indexOf("13") >=0) {
+    iconURL="https://dl.dropbox.com/s/x22fdaw100c5w2h/Cloud-Snow.svg";
+  } else if (iconStr.indexOf("50") >=0) {
+    iconURL="https://dl.dropbox.com/s/g051qiaybtp6ajr/Cloud-Fog.svg";
+  } else {iconURL="https://upload.wikimedia.org/wikipedia/commons/7/7d/Question_opening-closing.svg";
+  }
+  $("#weath-icon").html("<img src='" + iconURL + "' alt='Weather Icon' height='50' width='70'>");
+}
+
+</script>
+
+</body>
+
+</html>
